@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#111116">
+<title>Playus Training · Piano V1 + Zig V3 + React</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:#111116;color:#fff;touch-action:manipulation}button{font:inherit}
+#home{min-height:100dvh;padding:max(28px,env(safe-area-inset-top)) 20px max(28px,env(safe-area-inset-bottom))}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:1.6px;color:#999}h1{font-size:38px;line-height:.98;margin:8px 0 10px;letter-spacing:-1.5px}.lead{color:#aaa;font-size:14px;line-height:1.45;margin-bottom:25px}
+.card{width:100%;border:0;text-align:left;color:#fff;border-radius:24px;padding:21px;margin:12px 0;position:relative;overflow:hidden;min-height:150px}.react{background:linear-gradient(135deg,#146e69,#10cfc3)}.zig{background:linear-gradient(135deg,#37245d,#6840e3)}.card b{display:block;font-size:29px}.card span{display:block;margin-top:6px;font-size:13px;max-width:75%;opacity:.86}.badge{position:absolute;right:18px;top:18px;background:#0005;border-radius:99px;padding:7px 10px;font-size:11px;font-weight:800}.best{position:absolute;left:21px;bottom:17px;font-size:12px;font-weight:800}
+.game{display:none;position:fixed;inset:0;background:#f5f5f3;color:#111;overflow:hidden}.game.show{display:block}.back{position:absolute;z-index:20;top:max(15px,env(safe-area-inset-top));left:14px;border:0;border-radius:99px;background:#111d;color:#fff;padding:10px 13px;font-weight:800}
+#reactGame{padding:max(65px,env(safe-area-inset-top)) 20px 22px}.rtitle{text-align:center;font-size:27px;font-weight:900}.rstats{display:flex;justify-content:center;gap:10px;margin:12px}.pill{background:#fff;border-radius:14px;padding:9px 13px;font-size:12px}.rstatus{text-align:center;height:48px;display:flex;align-items:center;justify-content:center;font-weight:800}.board{width:min(88vw,390px);margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding:8px}.dot{border:0;aspect-ratio:1;border-radius:50%;background:#d6d6d4}.dot.on{background:#10cfc3}.start{position:absolute;bottom:max(25px,env(safe-area-inset-bottom));left:20px;right:20px;border:0;border-radius:17px;background:#111;color:#fff;padding:17px;font-weight:900;font-size:17px}
+#zigGame{background:#49339a;color:#fff}#zc{position:absolute;inset:0;width:100%;height:100%}.zui{position:absolute;inset:0;pointer-events:none}.ztime{text-align:center;margin-top:max(60px,env(safe-area-inset-top));font-weight:800}.zscore{text-align:center;font-size:55px;font-weight:900;margin-top:10px}.zpanel{pointer-events:auto;position:absolute;left:20px;right:20px;bottom:max(25px,env(safe-area-inset-bottom));background:#171321eb;padding:18px;border-radius:22px;text-align:center}.zpanel h2{margin:0 0 7px}.zpanel p{font-size:13px;color:#ddd;margin:0 0 13px}.zpanel button{width:100%;border:0;border-radius:16px;background:#ffe052;padding:16px;font-weight:900;font-size:17px}.hide{display:none}
+
+/* Video-calibrated Zig replaces the old 2D game only. */
+[hidden]{display:none!important}
+#zigGame{background:#29282b;color:white;touch-action:none;user-select:none;-webkit-user-select:none;--zig-scale:1;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif}
+#zc{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
+.zig-hud{position:absolute;inset:0;pointer-events:none}
+.zig-tools{position:absolute;z-index:12;left:10px;right:10px;top:max(8px,env(safe-area-inset-top));display:flex;justify-content:space-between;pointer-events:none}
+.zig-tools button{pointer-events:auto;width:36px;height:36px;display:grid;place-items:center;padding:0;border:0;background:#0003;color:#eee;border-radius:50%;font-size:20px;touch-action:manipulation}
+.zig-ranks{position:absolute;top:max(40px,calc(42px * var(--zig-scale)));left:50%;transform:translateX(-50%);display:flex;gap:calc(8px * var(--zig-scale));align-items:center}
+.zig-rank{display:flex;flex-direction:column;align-items:center;min-width:calc(72px * var(--zig-scale));position:relative}
+.zig-avatar{width:calc(60px * var(--zig-scale));height:calc(60px * var(--zig-scale));border-radius:50%;background:#9b723c;display:grid;place-items:center;font-size:calc(20px * var(--zig-scale));font-weight:900;color:#fff6bd;border:calc(2px * var(--zig-scale)) solid #e2c16e}
+.zig-rank:nth-child(2) .zig-avatar{background:#14786f;color:#aeeadd;border-color:#569a88}
+.zig-rank:nth-child(3) .zig-avatar{background:#25353f;color:#94adba;border-color:#536675}
+.zig-rank:nth-child(4) .zig-avatar{background:#177f74;color:#abe6db;border-color:#599c8e}
+.zig-rank-label{font-size:calc(11px * var(--zig-scale));font-weight:750;white-space:nowrap;color:#29282d;background:#d9d8dce8;border-radius:calc(10px * var(--zig-scale));padding:calc(5px * var(--zig-scale)) calc(7px * var(--zig-scale));margin-top:calc(-1px * var(--zig-scale))}
+.zig-rank:first-child:before{content:'SEN';position:absolute;top:calc(-12px * var(--zig-scale));background:#ffdc68;color:#5b491b;border-radius:5px;padding:calc(3px * var(--zig-scale)) calc(6px * var(--zig-scale));font-size:calc(10px * var(--zig-scale));font-weight:900}
+.zig-badge{position:absolute;top:max(112px,calc(145px * var(--zig-scale)));left:50%;transform:translateX(-50%);white-space:nowrap;border-radius:30px;padding:calc(7px * var(--zig-scale)) calc(15px * var(--zig-scale));background:#13645ee3;color:#bce6da;font-size:calc(12px * var(--zig-scale));font-weight:750;box-shadow:0 1px 5px #0002}
+.zig-score-wrap{position:absolute;top:30.9%;left:50%;transform:translate(-50%,-50%);text-align:center;font-size:calc(1px * var(--zig-scale))}
+#zigScoreGlyph{display:block;height:54em;overflow:visible}
+#zigScore{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.zig-overlay{position:absolute;z-index:5;inset:24% 0 0;background:rgba(10,8,25,.72);border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;touch-action:manipulation}
+.zig-overlay-inner{width:min(360px,100%);padding-top:38px}
+.zig-overlay h2{font-size:32px;line-height:1.1;margin:0 0 13px;font-weight:900;letter-spacing:-.5px}
+.zig-overlay p{font-size:16px;line-height:1.45;color:#efedf6;margin:0 0 22px}
+.zig-play{border:1px solid #fff29c;border-radius:13px;padding:15px;width:100%;background:#ffdf56;color:#241d18;font-weight:900;font-size:17px;box-shadow:inset 0 -3px #d1ad3b;touch-action:manipulation}
+.zig-hint{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:15px;right:15px;font-size:11px!important;color:#c0bace!important;line-height:1.4!important;margin:0!important}
+.zig-overlay[data-kind="ready"] h2{font-size:26px}
+.zig-overlay[data-kind="ready"] p:not(.zig-hint){font-size:21px;font-weight:800}
+.build-note{font-size:11px;color:#8e899b;line-height:1.6;margin:22px 2px 0}
+.boot-warning{margin:14px 0;background:#51442a;border-radius:12px;padding:14px;font-size:13px;color:#fff3d2}
+@media (orientation:landscape) and (max-height:520px){.zig-ranks,.zig-badge{display:none}.zig-score-wrap{top:16%}.zig-overlay{inset:0}.zig-overlay-inner{padding:0}.zig-hint{display:none}}
+</style></head><body>
+<main id="home"><div class="eyebrow">PLAYUS TRAINING HUB</div><h1>Antrenman<br>Alanı</h1><div class="lead">Playus denemeni harcamadan önce mekaniği çalış. Oyun seç:</div>
+<button class="card piano" onclick="openPiano()"><div class="badge">PIANO V1</div><b>Piano</b><span>Dört sütun · çift tuşlar · videodan ölçülen hız</span><div class="best" id="homePianoBest">1× tam deneme rekoru: 0</div></button>
+<button class="card react" onclick="openReact()"><div class="badge">REACTION</div><b>React</b><span>3×3 hedef · 5 tur · milisaniye reaksiyon</span><div class="best" id="homeReactBest">En iyi: —</div></button>
+<button class="card zig" onclick="openZig()"><div class="badge">ZIG V3</div><b>Zig</b><span>Video parkuru · perspektif platform · referans hız</span><div class="best" id="homeZigBest">En iyi: 0</div></button>
+<p class="build-note">PIANO V1 + ZIG V3 · Video ölçümlü antrenmanlar<br>React: mevcut 3×3 / 5 tur antrenmanı.<br>Resmî Playus uygulaması değildir; skorlar yalnız bu cihazda tutulur.</p><div class="boot-warning" id="bootWarning">Oyun kodu henüz çalışmadı. Bu ekran dosya önizlemesiyse oyunu yayımladığın GitHub Pages adresinden aç.</div></main>
+
+<section class="game" id="reactGame"><button class="back" onclick="goHome()">← Oyunlar</button><div class="rtitle">React</div>
+<div class="rstats"><div class="pill" id="rr">0/5</div><div class="pill" id="rl">Son: —</div><div class="pill" id="rb">En iyi: —</div></div>
+<div class="rstatus" id="rs">Başlamaya hazır.</div><div class="board" id="rboard"></div><button class="start" id="rstart">BAŞLA</button></section>
+
+<section class="game" id="zigGame" aria-label="Zig antrenman oyunu">
+<canvas id="zc" aria-label="Yön değiştirmek için oyun alanına dokun"></canvas>
+<div class="zig-hud">
+ <div class="zig-ranks" aria-label="Antrenman göstergeleri; çevrimiçi sıralama değildir">
+  <div class="zig-rank"><div class="zig-avatar">N</div><span class="zig-rank-label" id="zigLive">0 puan</span></div>
+  <div class="zig-rank"><div class="zig-avatar">EN</div><span class="zig-rank-label" id="zigBest">0 puan</span></div>
+  <div class="zig-rank"><div class="zig-avatar">201</div><span class="zig-rank-label">Video skoru</span></div>
+  <div class="zig-rank"><div class="zig-avatar">1×</div><span class="zig-rank-label">Referans hız</span></div>
+ </div>
+ <div class="zig-badge" id="zigBadge">Video parkuru · referans hız</div>
+ <div class="zig-score-wrap"><span id="zigScore">0</span><svg id="zigScoreGlyph" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="0 puan"></svg></div>
+</div>
+<div class="zig-tools"><button type="button" id="zigExit" aria-label="Oyunlara dön">‹</button><button type="button" id="zigPause" aria-label="Duraklat" hidden>Ⅱ</button></div>
+<div class="zig-overlay" id="zigOverlay" data-kind="ready"><div class="zig-overlay-inner">
+ <h2 id="zigTitle">Zig</h2><p id="zigDescription">Her dokunuş yönünü değiştirir.</p><button type="button" class="zig-play" id="zigStart">BAŞLA</button>
+</div><p class="zig-hint" id="zigHint">İlk yön sola-yukarı. Boşluk tuşu da yön değiştirir.<br>Bağımsız antrenman sürümü · ZIG V3</p></div>
+</section>
+
+<style>
+/* PIANO V1 · the two existing games retain their screens and mechanics. */
+.card.piano{background:linear-gradient(130deg,#38205e,#7954d4);min-height:164px}.card.piano span{max-width:72%}.card.piano .badge{background:#f0eaf4;color:#351e54}
+#pianoGame{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);background:#1c0d3a;color:#f5f2fc;touch-action:none;user-select:none;-webkit-user-select:none}
+#pcanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.p-tools{position:absolute;z-index:8;inset:max(8px,env(safe-area-inset-top)) 10px auto;display:flex;justify-content:space-between;pointer-events:none;gap:12px}
+.p-tools button{pointer-events:auto;width:38px;height:38px;border:1px solid #fff2;background:#160b2ed9;border-radius:50%;color:#f3edf8;font-size:22px;padding:0;touch-action:manipulation}
+.p-overlay{position:absolute;inset:0;z-index:6;background:#100822c9;display:flex;justify-content:center;align-items:center;padding:65px 14px max(18px,env(safe-area-inset-bottom));touch-action:pan-y;overflow-y:auto}
+.p-sheet{width:min(440px,100%);max-height:100%;overflow-y:auto;overscroll-behavior:contain;background:#221339f7;border:1px solid #baa5e92b;border-radius:25px;padding:22px;box-shadow:0 20px 90px #0005;touch-action:pan-y}
+.p-kicker{font-size:10px;letter-spacing:2px;color:#bd9dec;font-weight:800;margin-bottom:7px}.p-sheet h2{font-size:34px;letter-spacing:-1px;margin:0 0 9px;line-height:1.05}.p-sheet p{font-size:13px;color:#d1c6e3;line-height:1.5;margin:0 0 16px}
+.p-options{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;margin:0 0 14px}.p-field{font-size:11px;color:#cabada;display:flex;flex-direction:column;gap:6px}.p-field select{font:inherit;font-size:14px;min-height:44px;border-radius:11px;padding:8px 24px 8px 10px;border:1px solid #ffffff23;background:#352247;color:#fff;width:100%;touch-action:manipulation}.p-check{display:flex;align-items:center;gap:9px;font-size:12px;color:#d3c6e5;margin:14px 0;touch-action:manipulation}.p-check input{width:19px;height:19px;accent-color:#ab82ee}
+.p-btn{border:0;background:#eae2fc;color:#251137;font-size:15px;font-weight:850;min-height:48px;width:100%;border-radius:13px;padding:13px 12px;touch-action:manipulation}.p-btn.secondary{background:#422958;color:#f5ecff;margin-top:9px}.p-btn.tertiary{background:transparent;color:#c7b1e1;min-height:40px;margin-top:4px;font-size:12px}
+.p-small{font-size:10px!important;color:#a794bd!important;line-height:1.5!important;margin:12px 0 0!important}.p-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:14px 0}.p-stat{border-radius:11px;background:#38214c;padding:10px;font-size:10px;color:#cdbce0}.p-stat b{font-size:19px;display:block;color:white;margin-bottom:3px;font-variant-numeric:tabular-nums}
+#pianoReason{background:#d37d9620;padding:12px;border-radius:12px;border:1px solid #e89db52c;margin-bottom:12px;white-space:pre-line}
+.p-tips{margin:12px 0 0;font-size:12px;color:#ded3ec;line-height:1.6}.p-tips summary{cursor:pointer;touch-action:manipulation;font-weight:700;padding:6px 0}.p-tips p{font-size:12px;margin:9px 0}.p-tips strong{color:#fff}
+@media(max-height:630px){.p-overlay{align-items:flex-start;padding-top:50px}.p-sheet{padding:16px}.p-sheet h2{font-size:27px}.p-options{gap:7px}.p-small{margin-top:6px!important}}
+</style>
+<section class="game" id="pianoGame" aria-label="Piano antrenmanı">
+ <canvas id="pcanvas" aria-label="Aşağı akan beyaz tuşlara dokun. Çift tuşların ikisini de temizle."></canvas>
+ <div class="p-tools"><button type="button" id="pianoExit" aria-label="Oyunlara dön">‹</button><button type="button" id="pianoPause" aria-label="Duraklat" hidden>Ⅱ</button></div>
+ <div class="p-overlay" id="pianoOverlay">
+  <div class="p-sheet">
+   <div class="p-kicker">PIANO V1 · VİDEO ÖLÇÜMLÜ</div>
+   <h2 id="pianoHeading">Gör. Bas. İlerle.</h2>
+   <p id="pianoIntro">Beyaz tuşların her birine, ekrandan çıkmadan dokun. Aynı satırda iki beyaz varsa <strong>ikisini de</strong> temizle. Koyu tuşa veya boşluğa basma.</p>
+   <div id="pianoSettings">
+    <div class="p-options">
+     <label class="p-field">Akış<select id="pianoRoute"><option value="video">Videodaki dizi</option><option value="random">Rastgele</option><option value="chords">Çift tuş</option></select></label>
+     <label class="p-field">Hız<select id="pianoSpeed"><option value="0.6">0,60× · yavaş</option><option value="0.8">0,80×</option><option value="1" selected>1,00× · video</option><option value="1.15">1,15× · hızlı</option></select></label>
+     <label class="p-field">Başlangıç temposu<select id="pianoCheckpoint"><option value="0">Açılış</option><option value="10">10. saniye</option><option value="20">20. saniye</option><option value="30">30. sn · hızlı</option></select></label>
+     <label class="p-field">Hata olduğunda<select id="pianoMode"><option value="challenge">Deneme biter</option><option value="practice">Dur, devam et</option></select></label>
+    </div>
+    <label class="p-check"><input type="checkbox" id="pianoGuide">Basış bandını ve sıradaki satırı göster</label>
+   </div>
+   <p id="pianoReason" hidden></p>
+   <div class="p-stats" id="pianoStats" hidden></div>
+   <button type="button" class="p-btn" id="pianoStart">BAŞLA</button>
+   <button type="button" class="p-btn secondary" id="pianoAgain" hidden>AYNI AYARLARLA TEKRAR</button>
+   <button type="button" class="p-btn tertiary" id="pianoConfigure" hidden>AYARLARA DÖN</button>
+   <details class="p-tips" id="pianoTips"><summary>Oyunu nasıl çalışmalıyım?</summary>
+    <p><strong>Önce en alttaki beyazlar.</strong> Alttaki bir tuşu bırakıp üst satıra atlama. Bir satırda iki beyaz varsa, biri koyulaşınca iş bitmiş sayılmaz.</p>
+    <p><strong>İki başparmakla başla.</strong> Sol başparmak 1–2, sağ başparmak 3–4. Aynı taraftaki çiftte iki kısa dokunuş yap. Sürükleme ve basılı tutma tuş temizlemez.</p>
+    <p><strong>Alt sınırı bekleme.</strong> Orta-alt bölgede bas; gözün basacağın yerin bir–iki satır yukarısında olsun. Rehber bandı zorunlu vuruş çizgisi değildir.</p>
+    <p><strong>Sabit metronom değil.</strong> Video ilerledikçe akış hızlanır. Dokunuşu beyaz tuşun gerçek konumuna göre yap; renge bakmadan aynı yere tekrar basma.</p>
+    <p><strong>Önerilen sıra:</strong> 0,60× ile hatayı tanı → 0,80× ile temiz oyna → 1,00× açılış → 1,00× son bölüm → rastgele akış. Yeni denemeler sınırsız.</p>
+   </details>
+   <p class="p-small" id="pianoFootnote">Kaynak: gönderdiğin 157 puanlık kayıt. Dört sütun, 142 görünür satır ve hareket eğrisi videodan çıkarıldı. Kaydın sonrasında yeni satırlar üretilir ve son ölçülen tempo sabit tutulur. Tam çarpışma sınırı, özgün hız formülü ve cihaz gecikmesi doğrulanmış değildir. Bağımsız antrenmandır; Playus hesabına bağlanmaz.</p>
+  </div>
+ </div>
+ <span id="pianoScoreAccessible" style="position:absolute;width:1px;height:1px;overflow:hidden" aria-live="off">0 puan</span>
+</section>
+
+<script>
+const storage={get(k){try{return localStorage.getItem(k);}catch(_){return null;}},set(k,v){try{localStorage.setItem(k,String(v));}catch(_){}}};
+
+const home=document.getElementById('home'),RG=document.getElementById('reactGame'),ZG=document.getElementById('zigGame');
+function stopReact(){clearTimeout(rTimer);rRun=false;rArmed=false;rClear();rstart.disabled=false;rstart.textContent='BAŞLA';} function goHome(){if(window.Piano)Piano.close();stopReact();Zig.close();RG.classList.remove('show');ZG.classList.remove('show');home.style.display='block';updateHome();}
+function openReact(){if(window.Piano)Piano.close();Zig.close();ZG.classList.remove('show');home.style.display='none';RG.classList.add('show')}
+function openZig(){if(window.Piano)Piano.close();stopReact();RG.classList.remove('show');home.style.display='none';ZG.classList.add('show');Zig.open();}
+function updateHome(){let r=+(storage.get('hubReactBest')||0),z=+(storage.get('hubZigV3Best')||0);document.getElementById('homeReactBest').textContent='En iyi: '+(r?Math.round(r)+' ms':'—');document.getElementById('homeZigBest').textContent='En iyi: '+z} updateHome();
+
+/* REACT */
+const board=document.getElementById('rboard'),rr=document.getElementById('rr'),rl=document.getElementById('rl'),rb=document.getElementById('rb'),rs=document.getElementById('rs'),rstart=document.getElementById('rstart');
+let dots=[],rRun=false,rArmed=false,rActive=-1,rShown=0,rTimer,rScores=[];
+for(let i=0;i<9;i++){let b=document.createElement('button');b.className='dot';b.onclick=()=>rHit(i);board.appendChild(b);dots.push(b)}
+function rBest(){return +(storage.get('hubReactBest')||0)}
+function rUI(){let b=rBest();rb.textContent='En iyi: '+(b?Math.round(b)+' ms':'—');rr.textContent=rScores.length+'/5'}
+function rClear(){dots.forEach(d=>d.classList.remove('on'));rActive=-1}
+function rNext(){if(!rRun||!RG.classList.contains('show'))return;rClear();rArmed=false;rs.textContent='Hazır ol…';rTimer=setTimeout(()=>{rActive=Math.floor(Math.random()*9);dots[rActive].classList.add('on');rShown=performance.now();rArmed=true;rs.textContent='ŞİMDİ!'},1200+Math.random()*2800)}
+function rBegin(){rScores=[];rRun=true;rUI();rstart.disabled=true;rstart.textContent='DEVAM EDİYOR';rNext()}
+function rHit(i){if(!rRun)return;if(!rArmed||i!==rActive){clearTimeout(rTimer);rClear();rArmed=false;rs.textContent='Erken / yanlış';rTimer=setTimeout(rNext,600);return}let ms=performance.now()-rShown;rArmed=false;rClear();rScores.push(ms);rl.textContent='Son: '+Math.round(ms)+' ms';let b=rBest();if(!b||ms<b)storage.set('hubReactBest',ms);rUI();if(rScores.length>=5){let avg=rScores.reduce((a,b)=>a+b,0)/5;rs.textContent='Ortalama: '+Math.round(avg)+' ms';rRun=false;rstart.disabled=false;rstart.textContent='TEKRAR OYNA';updateHome()}else rTimer=setTimeout(rNext,500)}
+rstart.onclick=rBegin;rUI();
+
+const SCORE_GLYPHS={"0":{"d":"M343 -14C521 -14 651 119 651 350C651 581 521 714 343 714C164 714 34 581 34 350C34 119 164 -14 343 -14ZM343 148C279 148 233 203 233 350C233 497 279 552 343 552C406 552 452 497 452 350C452 203 406 148 343 148Z","w":685},"1":{"d":"M6 700V547H136V0H334V700Z","w":405},"2":{"d":"M305 157 437 279C537 371 556 433 556 501C556 631 445 714 284 714C146 714 47 656 -6 568L141 486C169 531 215 554 266 554C326 554 356 527 356 482C356 453 348 421 292 369L30 124V0H575V157Z","w":599},"3":{"d":"M393 420 538 576V700H32V547H308L183 412V287H266C342 287 373 261 373 219C373 172 329 146 262 146C196 146 124 166 68 204L-4 55C68 10 171 -14 268 -14C479 -14 573 100 573 219C573 319 511 395 393 420Z","w":603},"4":{"d":"M694 291H590V410H403V291H261L546 700H341L27 263V134H397V0H590V134H694Z","w":700},"5":{"d":"M296 445H249L258 547H540V700H94L59 291H249C356 291 385 263 385 220C385 173 340 146 273 146C206 146 136 166 79 204L8 55C79 10 182 -14 279 -14C490 -14 584 100 584 225C584 349 503 445 296 445Z","w":607},"6":{"d":"M392 446C326 446 273 428 234 394C244 501 311 557 411 557C456 557 500 549 540 521L612 663C561 696 485 714 406 714C185 714 34 575 34 331C34 104 162 -14 358 -14C511 -14 633 79 633 225C633 359 524 446 392 446ZM346 127C286 127 248 163 248 215C248 268 288 304 345 304C402 304 441 270 441 216C441 161 402 127 346 127Z","w":649},"7":{"d":"M23 700V435H192V543H376L140 0H356L603 576V700Z","w":632},"8":{"d":"M538 369C585 402 613 450 613 510C613 634 499 714 334 714C169 714 55 634 55 510C55 450 83 402 130 369C67 333 30 278 30 206C30 72 153 -14 334 -14C515 -14 638 72 638 206C638 278 601 333 538 369ZM334 575C383 575 418 548 418 501C418 455 384 428 334 428C284 428 251 455 251 501C251 548 285 575 334 575ZM334 125C271 125 229 158 229 212C229 266 271 299 334 299C397 299 439 266 439 212C439 158 397 125 334 125Z","w":669},"9":{"d":"M290 714C138 714 16 621 16 475C16 341 125 254 257 254C323 254 375 272 414 305C403 199 337 143 238 143C193 143 149 151 109 179L37 37C88 4 164 -14 242 -14C464 -14 615 125 615 369C615 596 487 714 290 714ZM304 396C247 396 208 430 208 484C208 539 247 573 303 573C363 573 401 537 401 485C401 432 361 396 304 396Z","w":649}};
+function drawScoreNumber(n){
+ const svg=document.getElementById('zigScoreGlyph');const str=String(n);let x=0,body='';
+ for(const ch of str){const g=SCORE_GLYPHS[ch];body+='<path transform="translate('+x+',0)" d="'+g.d+'"/>';x+=g.w;}
+ svg.setAttribute('viewBox','0 0 '+x+' 740');svg.style.width=(x/740*54)+'em';
+ svg.setAttribute('aria-label',str+' puan');svg.innerHTML='<g fill="white" transform="translate(0,725) scale(1,-1)">'+body+'</g>';
+}
+
+/* ZIG V3 — video-calibrated independent practice reconstruction.
+ * Reference: user-supplied 512x1128, 30fps recording (not the original game source).
+ * Top-face homography measured from twelve lattice corners; ~0.49px fit RMSE
+ * in the 10.8s reference frame. Motion fitted independently from moving corners.
+ * No external libraries, requests, accounts, telemetry or synthetic touch events.
+ */
+const Zig = (() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const canvas = $('zc'), ctx = canvas.getContext('2d', {alpha:false});
+  const overlay = $('zigOverlay'), title = $('zigTitle'), description = $('zigDescription');
+  const startButton = $('zigStart'), pauseButton = $('zigPause'), hint = $('zigHint');
+  const scoreOut = $('zigScore'), bestOut = $('zigBest'), badge = $('zigBadge');
+  const CFG = Object.freeze({
+    version:'3.0.1', v0:1.48656823, growth:0.02999504,
+    offset:1.8584704656, height:3.25, lookAhead:8,
+    radius:14.45, contactTolerance:0.008, key:'hubZigV3Best',
+    referenceEnd:207
+  });
+  const H = [[65.2198113104235, -30.189272765448735, 216.73263836565138], [-3.1601723807682847, -2.0414052931931566, 838.929552195888], [0.035645892055882415, 0.0483271249511028, 1.0]];
+  const HZ = [-16.733592064267683, -97.3618902415954, -0.06173930798537214];
+  const recorded = [[4,3],[4,4],[5,4],[5,5],[6,5],[6,6],[7,6],[8,6],[9,6],[10,6],[11,6],[11,7],[11,8],[11,9],[11,10],[12,10],[13,10],[14,10],[14,11],[15,11],[16,11],[16,12],[16,13],[16,14],[17,14],[18,14],[18,15],[19,15],[19,16],[19,17],[20,17],[21,17],[22,17],[22,18],[22,19],[23,19],[23,20],[24,20],[24,21],[25,21],[25,22],[26,22],[27,22],[27,23],[27,24],[28,24],[28,25],[29,25],[30,25],[30,26],[31,26],[31,27],[32,27],[32,28],[32,29],[32,30],[32,31],[32,32],[33,32],[34,32],[34,33],[34,34],[34,35],[35,35],[36,35],[37,35],[37,36],[37,37],[38,37],[38,38],[39,38],[39,39],[40,39],[41,39],[41,40],[41,41],[41,42],[42,42],[43,42],[44,42],[44,43],[44,44],[44,45],[45,45],[46,45],[47,45],[48,45],[49,45],[49,46],[50,46],[50,47],[51,47],[51,48],[52,48],[53,48],[53,49],[53,50],[54,50],[54,51],[54,52],[55,52],[55,53],[55,54],[55,55],[55,56],[55,57],[56,57],[57,57],[58,57],[59,57],[60,57],[61,57],[61,58],[62,58],[63,58],[63,59],[63,60],[64,60],[64,61],[64,62],[65,62],[66,62],[67,62],[67,63],[67,64],[68,64],[69,64],[69,65],[70,65],[70,66],[71,66],[71,67],[72,67],[72,68],[72,69],[73,69],[73,70],[73,71],[73,72],[73,73],[73,74],[74,74],[75,74],[75,75],[76,75],[76,76],[76,77],[76,78],[77,78],[78,78],[78,79],[78,80],[78,81],[78,82],[79,82],[80,82],[80,83],[80,84],[80,85],[81,85],[82,85],[83,85],[84,85],[84,86],[85,86],[85,87],[85,88],[85,89],[86,89],[86,90],[87,90],[87,91],[88,91],[89,91],[90,91],[91,91],[92,91],[93,91],[94,91],[94,92],[94,93],[95,93],[96,93],[97,93],[98,93],[98,94],[98,95],[99,95],[99,96],[100,96],[100,97],[101,97],[101,98],[101,99],[102,99],[102,100],[102,101],[102,102],[103,102],[104,102],[104,103]];
+  const tileMap = new Map();
+  const key = (u,v) => u+','+v;
+  let tiles = [], corners = [], state = 'closed', phaseBeforePause = 'running';
+  let width=1,height=1,pixelRatio=1,scale=1,offsetX=0,offsetY=0;
+  let q=0,u=0,v=0,axis=1,elapsed=0,fallTime=0,fallZ=0;
+  let raf=0,lastStamp=0,score=0,taps=0,seed=41729,previewOnly=false;
+  let best=readNumber(CFG.key,0), lastUiScore=-1;
+  function readNumber(k,fallback){const x=Number(storage.get(k));return Number.isFinite(x)&&x>=0?x:fallback;}
+  function appendTile(a,b){const t={u:a,v:b,n:a+b};tiles.push(t);tileMap.set(key(a,b),t);}
+  function random(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;}
+  function buildRoad(){
+    tiles=[];tileMap.clear();seed=41729;
+    for(const [a,b] of recorded) appendTile(a,b);
+    // Beyond the filmed road, extend explicitly as a generated practice course.
+    ensureRoad(650);
+    const opening=[[0,0],[0,1],[1,1],[1,3],[4,3]];
+    corners=opening.map(p=>({u:p[0],v:p[1],q:p[0]+p[1]}));
+    let oldAxis=0;
+    for(let i=0;i<tiles.length-1;i++){
+      const a=tiles[i],b=tiles[i+1],nextAxis=b.u>a.u?0:1;
+      if(nextAxis!==oldAxis){if(corners.at(-1).q!==a.n)corners.push({u:a.u,v:a.v,q:a.n});oldAxis=nextAxis;}
+    }
+  }
+  function ensureRoad(n){
+    while(tiles.at(-1).n<n){
+      const t=tiles.at(-1),diff=t.u-t.v;
+      let a=diff>4?1:diff< -4?0:(random()<0.5?0:1);
+      const len=Math.min(1+Math.floor(Math.pow(random(),2)*6),a===0?6-diff:6+diff);
+      for(let i=0;i<Math.max(1,len);i++){
+        const p=tiles.at(-1);appendTile(p.u+(a===0?1:0),p.v+(a===1?1:0));
+      }
+    }
+  }
+  function resize(){
+    const r=canvas.getBoundingClientRect();
+    width=Math.max(1,r.width);height=Math.max(1,r.height);
+    pixelRatio=Math.min(window.devicePixelRatio||1,3);
+    canvas.width=Math.round(width*pixelRatio);canvas.height=Math.round(height*pixelRatio);
+    ctx.setTransform(pixelRatio,0,0,pixelRatio,0,0);
+    scale=width/512;offsetX=0;offsetY=height*(708/1068)-708*scale;
+    $('zigGame').style.setProperty('--zig-scale',String(scale));
+    render();
+  }
+  function homogeneous(a,b,z=0){
+    const x=a-q/2+CFG.offset,y=b-q/2+CFG.offset;
+    return [H[0][0]*x+H[0][1]*y+H[0][2]+HZ[0]*z,
+            H[1][0]*x+H[1][1]*y+H[1][2]+HZ[1]*z,
+            H[2][0]*x+H[2][1]*y+H[2][2]+HZ[2]*z];
+  }
+  function project(a,b,z=0){const p=homogeneous(a,b,z);return {x:p[0]/p[2]*scale+offsetX,y:p[1]/p[2]*scale+offsetY,d:p[2]};}
+  function projectedPolygon(points){
+    // Homogeneous near-plane clipping prevents giant/reversed polygons behind camera.
+    let raw=points.map(p=>homogeneous(p[0],p[1],p[2]||0)),clipped=[];
+    for(let i=0;i<raw.length;i++){
+      const a=raw[i],b=raw[(i+1)%raw.length],ain=a[2]>.075,bin=b[2]>.075;
+      if(ain)clipped.push(a);
+      if(ain!==bin){const f=(.075-a[2])/(b[2]-a[2]);clipped.push(a.map((x,j)=>x+f*(b[j]-x)));}
+    }
+    return clipped.map(p=>({x:p[0]/p[2]*scale+offsetX,y:p[1]/p[2]*scale+offsetY,d:p[2]}));
+  }
+  function polygon(points,fill,alpha=1){
+    const p=projectedPolygon(points);if(p.length<3)return;
+    if(p.every(a=>a.y>height+5)||p.every(a=>a.y< -5)||p.every(a=>a.x< -5)||p.every(a=>a.x>width+5))return;
+    ctx.globalAlpha=alpha;ctx.fillStyle=fill;ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);
+    for(let i=1;i<p.length;i++)ctx.lineTo(p[i].x,p[i].y);
+    ctx.closePath();ctx.fill();
+    // Same-color subpixel seam fill. It is not an outline around the road.
+    if(alpha>=.995){ctx.strokeStyle=fill;ctx.lineWidth=.45;ctx.stroke();}
+    ctx.globalAlpha=1;
+  }
+  function inPlatform(a,b){return a>=-5.5-CFG.contactTolerance&&a<=3.5+CFG.contactTolerance&&b>=-5.5-CFG.contactTolerance&&b<=3.5+CFG.contactTolerance;}
+  function onRoad(a,b){
+    if(inPlatform(a,b))return true;
+    const ia=Math.floor(a+.5),ib=Math.floor(b+.5);
+    for(let da=-1;da<=1;da++)for(let db=-1;db<=1;db++){
+      const t=tileMap.get(key(ia+da,ib+db));
+      if(t && Math.abs(a-t.u)<=.5+CFG.contactTolerance && Math.abs(b-t.v)<=.5+CFG.contactTolerance)return true;
+    }
+    return false;
+  }
+  function render(){
+    if(!ctx||state==='closed')return;
+    ctx.setTransform(pixelRatio,0,0,pixelRatio,0,0);
+    const bg=ctx.createLinearGradient(0,0,0,height);
+    bg.addColorStop(0,'#29282b');bg.addColorStop(.50,'#4c3d85');bg.addColorStop(1,'#6c50df');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+    const top=ctx.createLinearGradient(0,offsetY+500*scale,0,offsetY+1130*scale);
+    top.addColorStop(0,'#ffdf60');top.addColorStop(.45,'#ffe25e');top.addColorStop(1,'#fff06a');
+    const limit=Math.floor(q)+CFG.lookAhead,first=Math.max(7,Math.floor(q)-23);
+    const visible=tiles.filter(t=>t.n>=first&&t.n<=limit);
+    const visibleSet=new Set(visible.map(t=>key(t.u,t.v)));
+    const tops=[],sides=[];
+    function box(x0,y0,x1,y1,alpha,underPlatform=false){
+      const depth=homogeneous((x0+x1)/2,(y0+y1)/2)[2];
+      tops.push({p:[[x0,y0,0],[x1,y0,0],[x1,y1,0],[x0,y1,0]],a:alpha,d:depth});
+      if(underPlatform||!visibleSet.has(key(Math.round(x0-.5),Math.round((y0+y1)/2))))
+        sides.push({p:[[x0,y0,0],[x0,y1,0],[x0,y1,-CFG.height],[x0,y0,-CFG.height]],a:alpha,d:depth,c:'#806c2a'});
+      if(underPlatform||!visibleSet.has(key(Math.round((x0+x1)/2),Math.round(y0-.5))))
+        sides.push({p:[[x0,y0,0],[x1,y0,0],[x1,y0,-CFG.height],[x0,y0,-CFG.height]],a:alpha,d:depth,c:'#7f6a28'});
+    }
+    if(q<25)box(-5.5,-5.5,3.5,3.5,1,true);
+    for(const t of visible){
+      const alpha=t.n===limit?(.18+.82*(q-Math.floor(q))):1;
+      box(t.u-.5,t.v-.5,t.u+.5,t.v+.5,alpha);
+    }
+    sides.sort((a,b)=>b.d-a.d);tops.sort((a,b)=>b.d-a.d);
+    // Fill adjacent opaque cells as one compound path. Per-cell strokes would
+    // invent visible tile seams that are absent in the reference recording.
+    function solidFaces(faces,fill){
+      ctx.globalAlpha=1;ctx.fillStyle=fill;ctx.beginPath();
+      for(const f of faces){
+        const p=projectedPolygon(f.p);if(p.length<3)continue;
+        ctx.moveTo(p[0].x,p[0].y);
+        for(let i=1;i<p.length;i++)ctx.lineTo(p[i].x,p[i].y);
+        ctx.closePath();
+      }
+      ctx.fill();
+    }
+    for(const color of ['#806c2a','#7f6a28'])solidFaces(sides.filter(f=>f.a>=.995&&f.c===color),color);
+    for(const f of sides)if(f.a<.995)polygon(f.p,f.c,f.a);
+    solidFaces(tops.filter(f=>f.a>=.995),top);
+    for(const f of tops)if(f.a<.995)polygon(f.p,top,f.a);
+    drawBall();
+  }
+  function drawBall(){
+    const p=project(u,v,fallZ);if(p.d<.08)return;
+    const r=CFG.radius/p.d*scale;
+    if(p.y>height+r*3)return;
+    if(fallZ===0){ctx.fillStyle='rgba(41,29,7,.23)';ctx.beginPath();ctx.ellipse(p.x+1.1*scale,p.y+r*.12,r*1.17,r*.43,0,0,Math.PI*2);ctx.fill();}
+    const cy=p.y-r*.90;
+    const g=ctx.createRadialGradient(p.x-r*.34,cy-r*.39,r*.03,p.x-r*.10,cy-r*.10,r*1.05);
+    g.addColorStop(0,'#858581');g.addColorStop(.22,'#54544f');g.addColorStop(.48,'#272724');g.addColorStop(.73,'#0c0d0b');g.addColorStop(1,'#000000');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=.65*scale;ctx.stroke();
+  }
+  function refreshUI(force=false){
+    if(force||score!==lastUiScore){
+      scoreOut.textContent=String(score);$('zigLive').textContent=score+' puan';lastUiScore=score;
+      drawScoreNumber(score);
+    }
+    bestOut.textContent=best+' puan';
+    badge.textContent=q>CFG.referenceEnd?'Kaydın sonrası · üretilmiş parkur':'Video parkuru · referans hız';
+  }
+  function reset(){
+    cancelAnimationFrame(raf);raf=0;lastStamp=0;previewOnly=false;
+    q=0;u=0;v=0;axis=1;elapsed=0;score=0;taps=0;fallTime=0;fallZ=0;
+    state='ready';refreshUI(true);pauseButton.hidden=true;
+  }
+  function showPanel(kind){
+    overlay.hidden=false;hint.hidden=kind!=='ready';
+    if(kind==='ready'){
+      title.textContent='Zig';description.innerHTML='Sarı platformda kal.<br>Her dokunuş yönünü değiştirir.';
+      startButton.textContent='BAŞLA';
+    }else if(kind==='paused'){
+      title.textContent='Duraklatıldı';description.innerHTML='Parkur ve hız aynı noktada bekliyor.';startButton.textContent='DEVAM ET';
+    }else{
+      title.textContent=score+' PUAN';
+      description.innerHTML='En iyi: <b>'+best+'</b> · '+elapsed.toFixed(1)+' saniye<br>Aynı parkurda tekrar antrenman yap.';
+      startButton.textContent='TEKRAR OYNA';
+    }
+    overlay.dataset.kind=kind;
+  }
+  function open(){
+    buildRoad();reset();showPanel('ready');resize();
+  }
+  function close(){cancelAnimationFrame(raf);raf=0;state='closed';lastStamp=0;}
+  function begin(){
+    if(state==='paused'){resume();return;}
+    if(state==='running'||state==='falling')return;
+    reset();state='running';overlay.hidden=true;hint.hidden=true;pauseButton.hidden=false;
+    lastStamp=performance.now();render();schedule();
+  }
+  function schedule(){if(!raf&&(state==='running'||state==='falling'))raf=requestAnimationFrame(frame);}
+  function frame(ts){
+    raf=0;if(state!=='running'&&state!=='falling')return;
+    advance(ts);render();schedule();
+  }
+  function advance(ts){
+    if(!lastStamp){lastStamp=ts;return;}
+    const dt=Math.max(0,(ts-lastStamp)/1000);lastStamp=ts;
+    // A suspended/tabbed-out page must not kill the player or silently alter speed.
+    if(dt>.25){pause(false);return;}
+    advanceSeconds(dt);
+  }
+  function advanceSeconds(dt){
+    let remaining=dt;
+    while(remaining>1e-8){
+      const h=Math.min(remaining,1/240);remaining-=h;
+      if(state==='falling'){
+        fallTime+=h;fallZ=-18*fallTime*fallTime;
+        const d=CFG.v0*Math.exp(CFG.growth*elapsed)*h;
+        if(axis===0)u+=d;else v+=d;
+        if(fallTime>=.6){finish();break;}
+      }else if(state==='running'){
+        const ds=(CFG.v0/CFG.growth)*Math.exp(CFG.growth*elapsed)*Math.expm1(CFG.growth*h);
+        elapsed+=h;q+=ds;if(axis===0)u+=ds;else v+=ds;
+        if(q>tiles.at(-1).n-30)ensureRoad(Math.floor(q)+300);
+        score=Math.floor(q+1e-7);
+        if(!onRoad(u,v)){state='falling';fallTime=0;pauseButton.hidden=true;}
+      }else break;
+    }
+    refreshUI();
+  }
+  function finish(){
+    state='over';cancelAnimationFrame(raf);raf=0;
+    if(!previewOnly&&score>best){best=score;storage.set(CFG.key,String(best));}
+    refreshUI();showPanel('over');updateHome();
+  }
+  function flip(){
+    if(state!=='running')return;
+    advance(performance.now());
+    if(state==='running'){axis=1-axis;taps++;render();}
+  }
+  function pause(advanceFirst=true){
+    if(state!=='running'&&state!=='falling')return;
+    if(advanceFirst){const ts=performance.now();if(ts-lastStamp<250)advance(ts);}
+    if(state==='over')return;
+    phaseBeforePause=state;state='paused';cancelAnimationFrame(raf);raf=0;pauseButton.hidden=true;
+    showPanel('paused');
+  }
+  function resume(){
+    if(state!=='paused')return;
+    state=phaseBeforePause;overlay.hidden=true;pauseButton.hidden=false;lastStamp=performance.now();schedule();
+  }
+  const pointer=e=>{
+    if(e.button!==undefined&&e.button!==0)return;
+    if(e.isPrimary===false)return;
+    e.preventDefault();flip();
+  };
+  if(window.PointerEvent)canvas.addEventListener('pointerdown',pointer,{passive:false});
+  else{
+    canvas.addEventListener('touchstart',e=>{e.preventDefault();flip();},{passive:false});
+    canvas.addEventListener('mousedown',e=>{if(!('ontouchstart' in window))pointer(e);});
+  }
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+  startButton.addEventListener('click',begin);pauseButton.addEventListener('click',()=>pause());
+  $('zigExit').addEventListener('click',goHome);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause(false);});
+  window.addEventListener('resize',()=>{if(state!=='closed')resize();});
+  document.addEventListener('keydown',e=>{
+    if(state==='closed'||e.repeat)return;
+    if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(state==='running')flip();else if(state!=='falling')begin();}
+    if(e.code==='Escape'){e.preventDefault();if(state==='paused')resume();else pause();}
+  });
+  // Test-only harness: deterministic browser checks, never used by normal gameplay.
+  if(new URLSearchParams(location.search).has('test'))window.__zigTest={
+    snapshot:()=>({state,q,u,v,axis,elapsed,score,taps,raf:!!raf,onRoad:onRoad(u,v),visible:Math.floor(q)+8}),
+    setPose:(a,b,d)=>{cancelAnimationFrame(raf);raf=0;state='ready';overlay.hidden=true;previewOnly=true;u=a;v=b;q=d;fallZ=0;score=Math.floor(q);refreshUI(true);render();},
+    step:dt=>{advanceSeconds(dt);render();},
+    manualStart:()=>{reset();state='running';previewOnly=true;overlay.hidden=true;lastStamp=performance.now();},
+    manualFlip:()=>{axis=1-axis;taps++;},
+    route:()=>JSON.parse(JSON.stringify(tiles)),
+    cfg:()=>({...CFG}),
+    pause:()=>pause(false),
+    background:()=>{state='closed';cancelAnimationFrame(raf);raf=0;},
+    autoTest:(seconds,fps=60)=>{
+      reset();state='running';previewOnly=true;overlay.hidden=true;
+      const moves=[{u:0,v:0},{u:0,v:1},{u:1,v:1},{u:1,v:3},...tiles.map(t=>({u:t.u,v:t.v}))];
+      let cursor=1;
+      for(let j=0;j<seconds*fps&&state==='running';j++){
+        let rest=1/fps;
+        while(rest>1e-9&&state==='running'){
+          while(cursor<moves.length&&moves[cursor].u+moves[cursor].v<=q+1e-7)cursor++;
+          const target=moves[cursor];if(!target)break;
+          axis=target.u>u+1e-5?0:1;
+          const distance=target.u+target.v-q;
+          const speed=CFG.v0*Math.exp(CFG.growth*elapsed);
+          const until=Math.log1p(Math.max(0,distance)*CFG.growth/speed)/CFG.growth;
+          const h=Math.min(rest,Math.max(1e-8,until));advanceSeconds(h);rest-=h;
+        }
+      }
+      render();return {state,q,u,v,elapsed,score,onRoad:onRoad(u,v)};
+    }
+  };
+  return {open,close,pause,getBest:()=>best};
+})();
+
+/* PIANO V1 — independent reconstruction of user-provided video.
+ * Source anchor: video 3.500s; 512×772, 30 fps. OS bars excluded (18 / 14 px).
+ * White/dark transitions recovered all 157 successful hits; tap positions and
+ * the original code are not available. Measured screen-space speed is used,
+ * not asserted to be the original speed function. Beyond video: generated.
+ * No network, external assets, account access, automation or score submission.
+ */
+window.Piano = (() => {
+ 'use strict';
+ const $=id=>document.getElementById(id),canvas=$('pcanvas'),ctx=canvas.getContext('2d',{alpha:false});
+ const SOURCE={"route":[[1],[2],[1],[2],[3],[1],[2],[0],[1],[0],[3],[2],[0],[1],[3],[1],[1,3],[1],[3],[0],[1,2],[1,2],[0],[1],[3],[0],[1,3],[2],[3],[1],[2],[0],[1,2],[3],[2],[0,2],[3],[1],[3],[2],[3],[0],[2],[1],[0],[2],[0],[1],[2],[3],[1],[2],[0],[2,3],[0],[3],[1],[2],[1],[3],[2],[3],[0],[2],[2,3],[0],[3],[0,1],[0],[3],[0],[3],[0],[2],[0],[0,1],[0,1],[2],[3],[2],[0],[1],[0],[2],[1],[2],[1],[2],[1],[3],[1],[2],[1],[2],[1],[0],[2],[0],[2],[3],[2],[3],[0,1],[3],[0,2],[1],[0],[2,3],[2],[1],[3],[2],[0],[3],[0],[2],[3],[1],[0],[0,3],[0],[2],[1],[3],[0],[3],[2],[1],[0,2],[0],[2],[1],[0],[2,3],[0],[1],[0],[1],[0],[1,2],[0,1],[3]],"motionTimes":[0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4.0,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,5.0,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,6.0,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,7.0,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,8.0,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,9.0,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,10.0,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,11.0,11.1,11.2,11.3,11.4,11.5,11.6,11.7,11.8,11.9,12.0,12.1,12.2,12.3,12.4,12.5,12.6,12.7,12.8,12.9,13.0,13.1,13.2,13.3,13.4,13.5,13.6,13.7,13.8,13.9,14.0,14.1,14.2,14.3,14.4,14.5,14.6,14.7,14.8,14.9,15.0,15.1,15.2,15.3,15.4,15.5,15.6,15.7,15.8,15.9,16.0,16.1,16.2,16.3,16.4,16.5,16.6,16.7,16.8,16.9,17.0,17.1,17.2,17.3,17.4,17.5,17.6,17.7,17.8,17.9,18.0,18.1,18.2,18.3,18.4,18.5,18.6,18.7,18.8,18.9,19.0,19.1,19.2,19.3,19.4,19.5,19.6,19.7,19.8,19.9,20.0,20.1,20.2,20.3,20.4,20.5,20.6,20.7,20.8,20.9,21.0,21.1,21.2,21.3,21.4,21.5,21.6,21.7,21.8,21.9,22.0,22.1,22.2,22.3,22.4,22.5,22.6,22.7,22.8,22.9,23.0,23.1,23.2,23.3,23.4,23.5,23.6,23.7,23.8,23.9,24.0,24.1,24.2,24.3,24.4,24.5,24.6,24.7,24.8,24.9,25.0,25.1,25.2,25.3,25.4,25.5,25.6,25.7,25.8,25.9,26.0,26.1,26.2,26.3,26.4,26.5,26.6,26.7,26.8,26.9,27.0,27.1,27.2,27.3,27.4,27.5,27.6,27.7,27.8,27.9,28.0,28.1,28.2,28.3,28.4,28.5,28.6,28.7,28.8,28.9,29.0,29.1,29.2,29.3,29.4,29.5,29.6,29.7,29.8,29.9,30.0,30.1,30.2,30.3,30.4,30.5,30.6,30.7,30.8,30.9,31.0,31.1,31.2,31.3,31.4,31.5,31.6,31.7,31.8,31.9,32.0,32.1,32.2,32.3,32.4,32.5,32.6,32.7,32.8,32.9,33.0,33.1,33.2,33.3,33.4,33.5,33.6,33.7,33.8,33.9,34.0,34.1,34.2,34.3,34.4,34.5,34.6,34.7,34.8,34.9,35.0,35.1,35.2,35.3,35.4,35.5,35.6,35.7,35.8,35.9,36.0,36.1,36.2,36.3,36.4,36.5,36.6,36.7,36.733333],"motionPixels":[0.0,25.0,62.5,92.5,120.0,145.0,177.667,213.667,237.0,271.0,308.0,339.667,368.667,402.667,434.667,466.667,495.667,524.5,551.0,588.0,625.0,654.333,687.0,720.0,750.0,793.0,815.5,856.667,890.667,921.667,954.667,985.667,1019.0,1052.5,1091.5,1119.5,1155.5,1189.333,1224.0,1255.0,1300.0,1326.0,1361.667,1393.667,1431.667,1472.667,1507.667,1540.5,1575.5,1619.5,1646.0,1684.5,1716.667,1746.167,1789.0,1825.0,1864.5,1904.667,1938.667,1972.667,2011.167,2052.333,2092.333,2124.333,2158.333,2196.333,2233.667,2271.167,2318.167,2343.167,2386.667,2424.333,2469.333,2504.667,2536.667,2576.333,2622.333,2659.333,2701.333,2738.0,2781.0,2818.0,2866.0,2906.333,2943.333,2983.833,3020.833,3061.333,3102.0,3150.333,3184.333,3229.833,3266.0,3315.0,3359.5,3406.5,3445.667,3492.667,3535.667,3578.889,3618.889,3658.556,3705.556,3745.333,3790.667,3835.0,3880.0,3933.667,3975.667,4021.667,4072.667,4121.333,4156.333,4206.333,4256.333,4295.111,4337.111,4392.0,4434.556,4481.222,4540.667,4588.667,4633.333,4670.333,4730.833,4765.833,4821.0,4870.0,4920.0,4968.833,5021.833,5075.333,5116.0,5178.333,5216.333,5266.333,5322.0,5369.0,5421.0,5477.667,5529.667,5576.667,5629.0,5681.0,5737.5,5794.0,5837.778,5895.5,5940.0,6001.889,6051.667,6109.667,6161.333,6224.333,6265.333,6321.167,6386.0,6436.0,6492.333,6548.667,6599.667,6670.0,6712.333,6778.333,6835.0,6887.0,6945.0,7002.667,7055.667,7113.667,7186.333,7239.333,7298.333,7351.667,7411.0,7475.0,7538.667,7588.667,7657.667,7713.333,7773.333,7833.333,7894.0,7950.0,7995.0,8071.667,8133.667,8205.333,8252.333,8319.333,8386.0,8443.0,8506.0,8569.667,8642.667,8706.0,8753.333,8827.333,8886.0,8951.0,9015.0,9085.667,9150.667,9221.5,9287.333,9347.333,9420.0,9475.0,9542.5,9626.667,9687.667,9755.333,9828.333,9885.833,9954.0,10033.0,10102.667,10153.667,10222.667,10286.333,10373.333,10438.0,10496.0,10578.667,10648.667,10730.667,10784.333,10867.333,10944.667,11011.0,11077.0,11143.833,11216.667,11308.333,11363.333,11437.167,11524.0,11580.0,11655.667,11736.667,11812.333,11907.333,11964.0,12053.0,12117.667,12187.667,12279.167,12375.333,12446.333,12505.0,12583.0,12655.667,12740.667,12839.333,12893.333,12986.222,13074.0,13148.333,13236.667,13318.0,13379.0,13461.333,13551.0,13640.0,13716.667,13799.667,13904.333,13967.333,14066.0,14129.0,14228.667,14306.667,14392.333,14499.333,14564.0,14650.0,14751.667,14838.667,14918.333,15006.333,15109.0,15196.833,15263.667,15351.667,15463.333,15523.333,15635.0,15717.333,15807.667,15898.0,15988.333,16064.667,16156.0,16254.833,16339.667,16447.333,16547.333,16649.0,16718.0,16812.667,16929.5,17015.333,17110.167,17205.0,17292.667,17388.167,17483.556,17580.778,17660.778,17773.889,17879.833,17978.5,18068.333,18159.778,18259.222,18384.667,18460.0,18578.333,18687.667,18763.667,18856.833,18976.0,19078.5,19173.167,19284.333,19387.333,19508.0,19576.333,19680.167,19801.333,19904.667,20000.5,20130.333,20209.0,20313.222,20443.667,20523.0,20654.667,20750.667,20847.333,20970.667,21076.0,21155.333,21279.0,21358.833,21464.667,21571.5,21696.111,21803.0,21909.222,22025.5,22142.0,22222.667,22357.333,22456.333,22564.111,22672.333,22762.222,22888.667,22979.333,23097.333,23215.667,23324.667,23424.833,23534.333,23644.111,23754.111,23864.111,23900.75]};
+ const CFG=Object.freeze({version:'1.0.0',vw:512,vh:740,left:51.2,right:460.8,top:86,bottom:740,pitch:512/3,tileW:100.4,tileH:169,firstTop:261.33333333,end:36.7333333333,key:'hubPianoV1Best',guideY:506});
+ let state='closed',pausedFrom='running',raf=null,stamp=0,elapsed=0,countdown=0,score=0,mistakes=0,clean=0,maxClean=0;
+ let rows=new Map(),generatedThrough=-1,seed=271828,scale=1,ox=0,oy=0,width=1,height=1,dpr=1,renderedScore=-1,focusError=null;
+ let cfg={route:'video',speed:1,checkpoint:0,mode:'challenge',guide:false},refClock=0,firstScorable=0;
+ let best=Number(storage.get(CFG.key))||0,stats=[],manual=false,liveStartedAt=0,lastHitAt=null;
+ const historicalRate=(SOURCE.motionPixels.at(-1)-SOURCE.motionPixels[SOURCE.motionPixels.length-31])/(SOURCE.motionTimes.at(-1)-SOURCE.motionTimes[SOURCE.motionTimes.length-31]);
+ function distance(t){
+  if(t<=0)return 0;
+  const ts=SOURCE.motionTimes,ds=SOURCE.motionPixels;
+  if(t>=CFG.end)return ds.at(-1)+(t-CFG.end)*historicalRate;
+  let lo=0,hi=ts.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(ts[m]<=t)lo=m;else hi=m;}
+  return ds[lo]+(ds[hi]-ds[lo])*(t-ts[lo])/(ts[hi]-ts[lo]);
+ }
+ function inverseDistance(d){
+  if(d<=0)return 0;
+  if(d>=SOURCE.motionPixels.at(-1))return CFG.end+(d-SOURCE.motionPixels.at(-1))/historicalRate;
+  let lo=0,hi=CFG.end;for(let i=0;i<36;i++){const m=(lo+hi)/2;if(distance(m)<d)lo=m;else hi=m;}return (lo+hi)/2;
+ }
+ function random(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
+ function maskFor(index){
+  if(cfg.route==='video' && index<SOURCE.route.length)return SOURCE.route[index].reduce((a,n)=>a|(1<<n),0);
+  // These probabilities are training choices; no claim to reproduce Playus RNG.
+  let mask=1<<Math.floor(random()*4);
+  if(random()<(cfg.route==='chords'?.65:.134)){let second;do{second=1<<Math.floor(random()*4);}while(second===mask);mask|=second;}
+  return mask;
+ }
+ function row(index){
+  if(index<0)return null;
+  if(!rows.has(index)){
+   // Generate sequentially so seeded routes do not depend on frame rate.
+   let last=generatedThrough+1;
+   for(let i=last;i<=index;i++){rows.set(i,{index:i,mask:maskFor(i),hit:0,hitAt:[-99,-99,-99,-99]});generatedThrough=i;}
+  }
+  return rows.get(index);
+ }
+ function topFor(index){return CFG.firstTop+distance(refClock)-index*CFG.pitch;}
+ function visible(){
+  const first=Math.max(0,Math.floor((CFG.firstTop+distance(refClock)-CFG.bottom)/CFG.pitch)-1);
+  const last=Math.max(first+1,Math.ceil((CFG.firstTop+distance(refClock)-CFG.top)/CFG.pitch)+1);
+  row(last);const out=[];for(let i=first;i<=last;i++){const r=row(i);if(r)out.push(r);}return out;
+ }
+ function outstanding(){return visible().filter(r=>(r.mask&~r.hit)!==0).sort((a,b)=>a.index-b.index);}
+ function updateHomeBest(){const el=$('homePianoBest');if(el)el.textContent='1× tam deneme rekoru: '+best;}
+ function readSettings(){
+  const s=Number($('pianoSpeed').value),cp=Number($('pianoCheckpoint').value);
+  cfg={route:$('pianoRoute').value,speed:[.6,.8,1,1.15].includes(s)?s:1,checkpoint:[0,10,20,30].includes(cp)?cp:0,mode:$('pianoMode').value,guide:$('pianoGuide').checked};
+ }
+ function eligible(){return cfg.route==='video' && cfg.speed===1 && cfg.checkpoint===0 && cfg.mode==='challenge' && !cfg.guide;}
+ function cancel(){if(raf!==null)cancelAnimationFrame(raf);raf=null;}
+ function schedule(){if(manual)return;if(raf===null&&(state==='running'||state==='countdown'))raf=requestAnimationFrame(frame);}
+ function resize(){
+  const b=canvas.getBoundingClientRect();width=Math.max(1,b.width);height=Math.max(1,b.height);dpr=Math.min(devicePixelRatio||1,3);
+  canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+  const gs=getComputedStyle($('pianoGame')),st=parseFloat(gs.paddingTop)||0,sb=parseFloat(gs.paddingBottom)||0;scale=Math.min(width/CFG.vw,(height-st-sb)/CFG.vh);ox=(width-CFG.vw*scale)/2;oy=st+(height-st-sb-CFG.vh*scale)/2;render();
+ }
+ function reset(){
+  cancel();manual=false;score=0;mistakes=0;clean=0;maxClean=0;elapsed=0;lastHitAt=null;stats=[];focusError=null;renderedScore=-1;
+  seed=cfg.route==='video'?271828:(Math.random()*4294967295)>>>0;rows.clear();generatedThrough=-1;refClock=cfg.checkpoint;firstScorable=0;
+  visible();
+  if(cfg.checkpoint>0){
+   firstScorable=Math.max(0,Math.ceil((CFG.firstTop+distance(refClock)+CFG.tileH-510)/CFG.pitch));
+   row(firstScorable+5);for(const r of rows.values())if(r.index<firstScorable)r.hit=r.mask;
+  }
+ }
+ function panel(kind,reason=''){
+  const ready=kind==='ready',over=kind==='over',recover=kind==='recover';
+  $('pianoOverlay').hidden=false;$('pianoSettings').hidden=!ready;$('pianoIntro').hidden=!ready;$('pianoTips').hidden=!ready;
+  $('pianoHeading').textContent=ready?'Gör. Bas. İlerle.':over?score+' PUAN':recover?'Hatayı gör. Tekrar dene.':'Duraklatıldı';
+  $('pianoReason').hidden=ready;$('pianoReason').textContent=reason || 'Akış aynı yerde bekliyor. Devam ettiğinde kısa bir hazırlık süresi var.';
+  $('pianoStart').textContent=ready?'BAŞLA':over?'AYNI AYARLARLA TEKRAR':'DEVAM ET';
+  $('pianoAgain').hidden=ready||over;$('pianoConfigure').hidden=ready;
+  $('pianoFootnote').hidden=!ready;$('pianoStats').hidden=ready||kind==='paused';
+  if(!ready){
+   const mean=stats.length?Math.round(stats.reduce((a,s)=>a+s.marginMs,0)/stats.length):0;
+   const vals=[[score,'Doğru tuş'],[mistakes,'Hata'],[elapsed.toFixed(1)+' sn','Oynanan süre'],[maxClean,'En uzun temiz seri']];
+   $('pianoStats').innerHTML=vals.map(v=>'<div class="p-stat"><b>'+v[0]+'</b>'+v[1]+'</div>').join('');
+  }
+  $('pianoPause').hidden=true;
+ }
+ function open(){state='ready';readSettings();reset();resize();panel('ready');updateHomeBest();render();}
+ function close(){cancel();state='closed';stamp=0;manual=false;$('pianoGame').classList.remove('show');}
+ function prepare(){cancel();state='ready';readSettings();reset();panel('ready');render();}
+ function start(){
+  if(state==='ready'){readSettings();reset();launch();return;}
+  if(state==='over'){reset();launch();return;}
+  if(state==='paused'||state==='recover'){focusError=null;launch();}
+ }
+ function launch(){state='countdown';countdown=1.2;$('pianoOverlay').hidden=true;$('pianoPause').hidden=false;stamp=performance.now();render();schedule();}
+ function restart(){reset();launch();}
+ function frame(ts){raf=null;if(state!=='running'&&state!=='countdown')return;advance(ts);render();schedule();}
+ function advance(ts){
+  const dt=Math.max(0,(ts-stamp)/1000);stamp=ts;
+  if(dt>.3){pause(false);return;}
+  step(dt);
+ }
+ function step(dt){
+  if(state==='countdown'){
+   const used=Math.min(countdown,dt);countdown-=used;dt-=used;
+   if(countdown<=1e-8){state='running';liveStartedAt=performance.now();}else return;
+  }
+  if(state!=='running'||dt<=0)return;
+  // Absolute measured distance, independent of display refresh rate or hit count.
+  refClock+=dt*cfg.speed;elapsed+=dt;
+  const misses=outstanding().filter(r=>r.index>=firstScorable && topFor(r.index)>=CFG.bottom);
+  if(misses.length)error('miss',null,misses[0]);
+  // Bounded memory for long practice sessions.
+  const pruneBefore=Math.floor((CFG.firstTop+distance(refClock)-CFG.bottom)/CFG.pitch)-24;
+  if(pruneBefore>0)for(const i of rows.keys())if(i<pruneBefore)rows.delete(i);
+  if(stats.length>10000)stats.splice(0,1000);
+ }
+ function error(type,point,r){
+  if(state!=='running')return;
+  mistakes++;clean=0;cancel();focusError={type,point,index:r?r.index:null};
+  const isDouble=r && ((r.mask & (r.mask-1))!==0);
+  let why=type==='miss'?(isDouble?'Çift satırın bir tuşu basılmadan çıktı. İki beyazın da koyulaştığını kontrol et.':'Bir beyaz tuş ekrandan basılmadan çıktı. Daha yukarıda basarak zaman payı bırak.'):
+   type==='used'?'Daha önce bastığın koyu tuşa tekrar dokundun. Parmağı kaldır; beyaz hedefi doğrulamadan aynı yere ikinci kez basma.':
+   'Beyaz tuş yerine boşluğa dokundun. Tuşun merkezini hedefle; beyazlar gelmeden ritme göre körlemesine basma.';
+  if(cfg.mode==='practice'){
+   if(type==='miss'&&r){
+    // Practice-only rewind, preserving already earned hits; no extra points.
+    const d=Math.max(0,distance(refClock)-(topFor(r.index)-(CFG.guideY-CFG.tileH/2)));
+    refClock=inverseDistance(d);
+    why+='\nKaçan satır tekrar basabileceğin konuma alındı.';
+   }
+   state='recover';panel('recover',why);
+  }else{
+   state='over';
+   if(eligible()&&!manual&&score>best){best=score;storage.set(CFG.key,best);updateHomeBest();}
+   why+='\n'+(eligible()?'1× tam deneme rekorun: '+best:'Bu ayar bir antrenmandır; 1× tam deneme rekoruna karışmaz.');
+   panel('over',why);
+  }
+  render();
+ }
+ function hitAt(x,y,advanceClock=true){
+  if(state!=='running')return false;
+  if(advanceClock&&!manual)advance(performance.now());
+  if(state!=='running')return false;
+  const lane=Math.floor((x-CFG.left)/102.4);
+  let r=null;
+  if(lane>=0&&lane<4&&y>=CFG.top&&y<=CFG.bottom){
+   const idx=Math.floor((CFG.firstTop+distance(refClock)+CFG.tileH-y)/CFG.pitch);
+   r=row(idx);const top=r?topFor(idx):0;const left=CFG.left+lane*102.4+1;
+   if(!r||y<top||y>top+CFG.tileH||x<left||x>left+CFG.tileW||!(r.mask&(1<<lane)))r=null;
+  }
+  if(!r){error('empty',{x,y},null);return false;}
+  if(r.hit&(1<<lane)){error('used',{x,y},r);return false;}
+  r.hit|=1<<lane;r.hitAt[lane]=refClock;score++;clean++;maxClean=Math.max(maxClean,clean);
+  const localV=(distance(refClock+.05)-distance(Math.max(0,refClock-.05)))/(.1)*cfg.speed;
+  stats.push({row:r.index,lane,clock:refClock,elapsed,x,y,marginMs:Math.max(0,(CFG.bottom-topFor(r.index))/Math.max(1,localV)*1000)});
+  lastHitAt=refClock;render();return true;
+ }
+ function pointer(e){
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  // Deliberately do not ignore non-primary pointers: chords need multi-touch.
+  e.preventDefault();const b=canvas.getBoundingClientRect();hitAt((e.clientX-b.left-ox)/scale,(e.clientY-b.top-oy)/scale);
+ }
+ if(window.PointerEvent)canvas.addEventListener('pointerdown',pointer,{passive:false});
+ else{
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();const b=canvas.getBoundingClientRect();for(const t of e.changedTouches)hitAt((t.clientX-b.left-ox)/scale,(t.clientY-b.top-oy)/scale);},{passive:false});
+  if(!('ontouchstart' in window))canvas.addEventListener('mousedown',pointer,{passive:false});
+ }
+ canvas.addEventListener('contextmenu',e=>e.preventDefault());
+ function pause(advanceFirst=true){
+  if(state!=='running'&&state!=='countdown')return;
+  if(advanceFirst&&!manual){const now=performance.now();if(now-stamp<300)advance(now);}
+  if(state!=='running'&&state!=='countdown')return;
+  pausedFrom=state;state='paused';cancel();panel('paused');render();
+ }
+ function rect(x,y,w,h,fill){ctx.fillStyle=fill;ctx.fillRect(x,y,w,h);}
+ function rounded(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+ function text(str,x,y,size,color='#fff',weight=700,align='center'){ctx.fillStyle=color;ctx.font=weight+' '+size+'px -apple-system,BlinkMacSystemFont,Arial,sans-serif';ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(str,x,y);}
+ function scoreGlyph(){
+  const str=String(score);let units=0;for(const ch of str)units+=SCORE_GLYPHS[ch].w;
+  ctx.save();ctx.translate(256-units*.03,155);ctx.scale(.06,-.06);ctx.fillStyle='#fff';
+  for(const ch of str){const g=SCORE_GLYPHS[ch];ctx.fill(new Path2D(g.d));ctx.translate(g.w,0);}ctx.restore();
+ }
+ function render(){
+  if(state==='closed'||!ctx)return;
+  ctx.setTransform(dpr,0,0,dpr,0,0);rect(0,0,width,height,'#1c0d3a');ctx.save();ctx.translate(ox,oy);ctx.scale(scale,scale);
+  const rr=visible();ctx.save();ctx.beginPath();ctx.rect(CFG.left,CFG.top,CFG.right-CFG.left,CFG.bottom-CFG.top);ctx.clip();
+  for(const r of rr){
+   const y=topFor(r.index);if(y>CFG.bottom||y+CFG.tileH<CFG.top)continue;
+   for(let lane=0;lane<4;lane++)if(r.mask&(1<<lane)){
+    let color='#eeedf3';if(r.hit&(1<<lane)){const age=Math.max(0,refClock-r.hitAt[lane]);const a=Math.exp(-age*4);color='rgb('+Math.round(42+19*a)+','+Math.round(30+23*a)+','+Math.round(69+17*a)+')';}
+    rect(CFG.left+lane*102.4+1,y,CFG.tileW,CFG.tileH,color);
+   }
+  }
+  if(cfg.guide){
+   rect(CFG.left,CFG.guideY-32,409.6,64,'#aa8af518');ctx.strokeStyle='#bca4ed85';ctx.lineWidth=1.4;ctx.setLineDash([5,6]);ctx.beginPath();ctx.moveTo(CFG.left,CFG.guideY);ctx.lineTo(CFG.right,CFG.guideY);ctx.stroke();ctx.setLineDash([]);
+   const next=outstanding().find(r=>topFor(r.index)+CFG.tileH>CFG.top&&topFor(r.index)<CFG.bottom);
+   if(next){ctx.strokeStyle='#aaecce';ctx.lineWidth=3;for(let l=0;l<4;l++)if((next.mask&~next.hit)&(1<<l))ctx.strokeRect(CFG.left+l*102.4+3,topFor(next.index)+2,CFG.tileW-4,CFG.tileH-4);}
+  }
+  if(focusError){rect(CFG.left,CFG.top,409.6,CFG.bottom-CFG.top,'#fb315b35');if(focusError.point){const p=focusError.point;ctx.strokeStyle='#ff7189';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,15,0,Math.PI*2);ctx.stroke();}}
+  ctx.restore();
+  // Actual personal/reference indicators, not copied people or a fake leaderboard.
+  const values=[['SEN',score+' puan','#9d733d'],['EN',best+' puan','#42666b'],['157','Video skoru','#969239'],[cfg.speed.toFixed(2)+'×','Tempo','#765066']];
+  values.forEach((v,i)=>{const x=184+i*47.5;ctx.fillStyle=v[2];ctx.beginPath();ctx.arc(x,27,20,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ffffff70';ctx.lineWidth=1.5;ctx.stroke();text(v[0],x,27,10,'#fff',850);rounded(x-24,43,48,12,5,'#ded9e5');text(v[1],x,49,7,'#30213f',750);});
+  const generated=cfg.route==='video'&&refClock>CFG.end;
+  const badge=generated?'Video sonrası · üretilmiş akış':cfg.route==='video'?'Video akışı · sınırsız tekrar':cfg.route==='chords'?'Çift tuş antrenmanı':'Rastgele antrenman';
+  rounded(164,63,184,16,8,generated?'#654025':'#145064');text(badge,256,71,8.5,'#d1ebf1',700);
+  scoreGlyph();
+  if(state==='countdown'){
+   rounded(166,336,180,80,18,'#130921dd');text(countdown>.8?'3':countdown>.4?'2':'1',256,376,47,'#f0e8ff',900);
+  }
+  if(cfg.guide&&state==='running')text('Rehber bant · zorunlu çizgi değil',256,CFG.bottom-15,10,'#bca4e2',600);
+  ctx.restore();
+  if(score!==renderedScore){$('pianoScoreAccessible').textContent=score+' puan';renderedScore=score;}
+ }
+ $('pianoStart').addEventListener('click',start);$('pianoAgain').addEventListener('click',restart);$('pianoConfigure').addEventListener('click',prepare);$('pianoPause').addEventListener('click',()=>pause());$('pianoExit').addEventListener('click',()=>{close();goHome();});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)pause(false);});
+ window.addEventListener('resize',()=>{if(state!=='closed'){pause(false);resize();}});
+ document.addEventListener('keydown',e=>{
+  if(state==='closed'||e.repeat)return;
+  if(e.code==='Escape'){e.preventDefault();if(state==='paused')start();else pause();return;}
+  if((e.code==='Space'||e.code==='Enter')&&state!=='running'){e.preventDefault();start();return;}
+  const lane={KeyD:0,KeyF:1,KeyJ:2,KeyK:3}[e.code];if(lane===undefined||state!=='running')return;
+  e.preventDefault();hitAt(CFG.left+(lane+.5)*102.4,CFG.guideY);
+ });
+ updateHomeBest();
+ // A deterministic test harness only; not active unless ?test=1 is present.
+ if(new URLSearchParams(location.search).has('test'))window.__pianoTest={
+  cfg:()=>({...CFG,historicalRate}),source:()=>JSON.parse(JSON.stringify(SOURCE)),
+  start:(options={})=>{cfg={route:'video',speed:1,checkpoint:0,mode:'challenge',guide:false,...options};reset();manual=true;state='running';$('pianoOverlay').hidden=true;render();},
+  step:dt=>{step(dt);render();},hit:(x,y)=>hitAt(x,y,false),pause:()=>pause(false),
+  snapshot:()=>({state,score,mistakes,clean,elapsed,refClock,distance:distance(refClock),raf:raf!==null,scale,ox,oy,firstScorable,visible:visible().map(r=>({...r,top:topFor(r.index)}))}),
+  setClock:t=>{refClock=t;render();},setHits:hits=>{for(const h of hits){const r=row(h.row);r.hit|=1<<h.lane;r.hitAt[h.lane]=h.t-3.5;}score=hits.length;render();},
+  coords:(i,l)=>({x:CFG.left+(l+.5)*102.4,y:topFor(i)+CFG.tileH/2}),
+  distance,inverseDistance,close,
+  demo:(seconds,fps=60)=>{cfg={route:'video',speed:1,checkpoint:0,mode:'challenge',guide:false};reset();manual=true;state='running';$('pianoOverlay').hidden=true;for(let j=0;j<Math.round(seconds*fps)&&state==='running';j++){step(1/fps);for(const r of visible()){const y=topFor(r.index)+CFG.tileH/2;if(y>=CFG.guideY&&y<CFG.bottom)for(let l=0;l<4;l++)if((r.mask&~r.hit)&(1<<l))hitAt(CFG.left+(l+.5)*102.4,y,false);}}render();return {state,score,mistakes,elapsed,refClock,distance:distance(refClock)};}
+ };
+ return {open,close,pause,getBest:()=>best};
+})();
+window.openPiano=function(){stopReact();Zig.close();RG.classList.remove('show');ZG.classList.remove('show');home.style.display='none';document.getElementById('pianoGame').classList.add('show');Piano.open();};
+
+
+document.getElementById("bootWarning").hidden=true;
+</script></body></html>
